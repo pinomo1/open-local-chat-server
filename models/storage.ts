@@ -52,7 +52,13 @@ export class Storage{
     }
 
     public hasToken(token: string): boolean{
-        return this.tokens.has(token);
+        if (!this.tokens.has(token)){
+            return false;
+        }
+        if (!this.users.has(this.tokens.get(token)!)){
+            return false;
+        }
+        return this.users.get(this.tokens.get(token)!)!.isTokenValid(token);
     }
 
     public addUser(username: string, password: string): void{

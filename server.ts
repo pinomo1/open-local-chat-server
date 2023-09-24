@@ -145,10 +145,16 @@ function isValidMessage(message: string): boolean{
     if (message.length > 1000){
         return false;
     }
-    if (message.trim().length == 0){
-        return false;
-    }
     return true;
+}
+
+function normalizeMessage(message: string): string{
+    message = message.replace(/[\u2800-\u28FF]/g, '');
+    message = message.replace(/\n\s+/g, '\n');
+    message = message.replace(/\s+\n/g, '\n');
+    message = message.replace(/\n+/g, '\n');
+    message = message.trim();
+    return message;
 }
 
 function logInterface(){
@@ -173,7 +179,6 @@ io.on('connection', (socket) => {
             }
             socket.join(generalRoom);
             socket.emit('joined', user.getUsername());
-            // send all users in the room
             let users = storage.onlineUsers();
             socket.emit('users', users);
             socket.to(generalRoom).emit('joined', user.getUsername());
@@ -185,14 +190,21 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chat', (message: string) => {
+        if (!storage.hasSocket(socket.id)){
+            socket.emit('error', "Not logged in");
+            return;
+        }
+        if (!storage.hasToken(storage.getTokenBySocket(socket.id))){
+            socket.emit('error', "Invalid token");
+            return;
+        }
+        let token = storage.getTokenBySocket(socket.id);
+        let user = storage.getUserByToken(token);
+        message = normalizeMessage(message);
         if (!isValidMessage(message)){
             socket.emit('error', "Invalid message");
             return;
         }
-        message = message.trim();
-        message = message.replace(/\n+/g, '\n');
-        let token = storage.getTokenBySocket(socket.id);
-        let user = storage.getUserByToken(token);
         socket.emit('chat', user.getUsername(), message);
         socket.to(generalRoom).emit('chat', user.getUsername(), message);
     });
