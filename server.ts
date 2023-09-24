@@ -197,6 +197,14 @@ io.on('connection', (socket) => {
         socket.to(generalRoom).emit('chat', user.getUsername(), message);
     });
 
+    socket.on('logout', () => {
+        if (storage.hasSocket(socket.id)){
+            let token = storage.getTokenBySocket(socket.id);
+            storage.eraseToken(token);
+            storage.removeSocket(socket.id);
+        }
+    });
+
     socket.on('disconnect', () => {
         if (storage.hasSocket(socket.id)){
             console.log('user disconnected');
