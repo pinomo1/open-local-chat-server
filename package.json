@@ -1,0 +1,17 @@
+{
+  "name": "open-local-chat-server",
+  "version": "0.0.1",
+  "description": "Server for chat communications (preferably) in local networks",
+  "main": "server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run": "ts-node server.ts"
+  },
+  "author": "pinomo / pinomo1",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "socket.io": "^4.7.2",
+    "ts-node": "^10.9.1",
+    "uuid": "^9.0.1"
+  }
+}
