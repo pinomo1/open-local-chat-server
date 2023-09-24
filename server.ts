@@ -93,6 +93,16 @@ const io = new Server(httpServer)
 const port = 9001
 const generalRoom = "general";
 
+function isValidMessage(message: string): boolean{
+    if (message.length > 1000){
+        return false;
+    }
+    if (message.trim().length == 0){
+        return false;
+    }
+    return true;
+}
+
 io.on('connection', (socket) => {
     console.log('user connected');
     
@@ -110,6 +120,11 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chat', (message: string) => {
+        if (!isValidMessage(message)){
+            socket.emit('error', "Invalid message");
+            return;
+        }
+        message = message.trim();
         let token = storage.getTokenBySocket(socket.id);
         let user = storage.getUserByToken(token);
         socket.emit('chat', user.getUsername(), message);
