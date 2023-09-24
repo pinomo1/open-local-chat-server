@@ -4,6 +4,7 @@ export class Storage{
     private users: Map<string, User> = new Map<string, User>();
     private tokens: Map<string, string> = new Map<string, string>();
     private socketToToken: Map<string, string> = new Map<string, string>();
+    private userToSocket: Map<string, string> = new Map<string, string>();
     private static instance: Storage;
     private filename: string = "users.txt";
 
@@ -14,6 +15,7 @@ export class Storage{
         this.users = new Map<string, User>();
         this.tokens = new Map<string, string>();
         this.socketToToken = new Map<string, string>();
+        this.userToSocket = new Map<string, string>();
         Storage.instance = this;
         this.loadUsersFromFile();
     }
@@ -50,7 +52,13 @@ export class Storage{
     }
 
     public hasToken(token: string): boolean{
-        return this.tokens.has(token);
+        if (!this.tokens.has(token)){
+            return false;
+        }
+        if (!this.users.has(this.tokens.get(token)!)){
+            return false;
+        }
+        return this.users.get(this.tokens.get(token)!)!.isTokenValid(token);
     }
 
     public addUser(username: string, password: string): void{
@@ -77,6 +85,7 @@ export class Storage{
 
     public addSocketToToken(socket: string, token: string): void{
         this.socketToToken.set(socket, token);
+        this.userToSocket.set(this.getUserByToken(token).getUsername(), socket);
     }
 
     public getTokenBySocket(socket: string): string{
@@ -84,10 +93,19 @@ export class Storage{
     }
 
     public removeSocket(socket: string): void{
+        this.userToSocket.delete(this.getUserByToken(this.getTokenBySocket(socket)).getUsername());
         this.socketToToken.delete(socket);
     }
 
     public hasSocket(socket: string): boolean{
         return this.socketToToken.has(socket);
+    }
+
+    public isUserOnline(username: string): boolean{
+        return this.userToSocket.has(username);
+    }
+
+    public onlineUsers(): string[]{
+        return Array.from(this.userToSocket.keys());
     }
 }
