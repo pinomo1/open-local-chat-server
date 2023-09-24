@@ -61,8 +61,11 @@ const httpServer = createServer(function(req,res){
                 res.end(JSON.stringify({error: "Invalid JSON"}));
                 return;
             }
-            
-            if(req.url == "/api/login"){
+            if (req.url == "/api/canaccess"){
+                res.writeHead(200, headers);
+                res.end();
+            }
+            else if(req.url == "/api/login"){
                 let username: string, password: string;
                 if (json.username == undefined || json.password == undefined){
                     res.writeHead(400, headers);
