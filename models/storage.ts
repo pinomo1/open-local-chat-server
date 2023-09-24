@@ -4,6 +4,7 @@ export class Storage{
     private users: Map<string, User> = new Map<string, User>();
     private tokens: Map<string, string> = new Map<string, string>();
     private socketToToken: Map<string, string> = new Map<string, string>();
+    private userToSocket: Map<string, string> = new Map<string, string>();
     private static instance: Storage;
     private filename: string = "users.txt";
 
@@ -14,6 +15,7 @@ export class Storage{
         this.users = new Map<string, User>();
         this.tokens = new Map<string, string>();
         this.socketToToken = new Map<string, string>();
+        this.userToSocket = new Map<string, string>();
         Storage.instance = this;
         this.loadUsersFromFile();
     }
@@ -77,6 +79,7 @@ export class Storage{
 
     public addSocketToToken(socket: string, token: string): void{
         this.socketToToken.set(socket, token);
+        this.userToSocket.set(this.getUserByToken(token).getUsername(), socket);
     }
 
     public getTokenBySocket(socket: string): string{
@@ -85,9 +88,18 @@ export class Storage{
 
     public removeSocket(socket: string): void{
         this.socketToToken.delete(socket);
+        this.userToSocket.delete(this.getUserByToken(this.getTokenBySocket(socket)).getUsername());
     }
 
     public hasSocket(socket: string): boolean{
         return this.socketToToken.has(socket);
+    }
+
+    public isUserOnline(username: string): boolean{
+        return this.userToSocket.has(username);
+    }
+
+    public onlineUsers(): string[]{
+        return Array.from(this.userToSocket.keys());
     }
 }

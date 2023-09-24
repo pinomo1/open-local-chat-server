@@ -167,8 +167,15 @@ io.on('connection', (socket) => {
     socket.on('join', (token: string) => {
         if(storage.hasToken(token)){
             let user = storage.getUserByToken(token);
+            if (storage.isUserOnline(user.getUsername())){
+                socket.emit('error', "User already online");
+                return;
+            }
             socket.join(generalRoom);
             socket.emit('joined', user.getUsername());
+            // send all users in the room
+            let users = storage.onlineUsers();
+            socket.emit('users', users);
             socket.to(generalRoom).emit('joined', user.getUsername());
             storage.addSocketToToken(socket.id, token);
         }
