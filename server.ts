@@ -2,8 +2,34 @@ import { User } from "./models/user";
 import { Storage } from "./models/storage";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import { networkInterfaces } from "node:os";
+import dgram from "node:dgram";
 
+const multicastAddress = "224.0.2.61";
+const multicastSocket: dgram.Socket = dgram.createSocket({type: "udp4", reuseAddr: true});
+const localAddresses: string[] = [];
 const storage = new Storage();
+
+const nets = networkInterfaces();
+
+for (const name of Object.keys(nets)) {
+    for (const net of nets[name]!) {
+        if (net.family === 'IPv4' && !net.internal) {
+            localAddresses.push(net.address);
+        }
+    }
+}
+
+multicastSocket.on('message', (msg, rinfo) => {
+    let message = msg.toString();
+    let address = rinfo.address;
+    let port = rinfo.port;
+    console.log(`Received ${message} from ${address}:${port}`);
+    if (message == "DISCOVER"){
+        let reply = Buffer.from("OFFER");
+        multicastSocket.send(reply, port, address);
+    }
+});
 
 const httpServer = createServer(function(req,res){
     let headers = {
@@ -12,15 +38,19 @@ const httpServer = createServer(function(req,res){
         'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
         'Content-Type': 'application/json'
     };
+    
     if (req.method == "OPTIONS"){
         res.writeHead(200, headers);
         res.end(JSON.stringify({}));
     }
+
     else if (req.method == "POST"){
         let body = "";
+
         req.on('data', (chunk) => {
             body += chunk.toString();
         });
+
         req.on('end', () => {
             let json : any;
             try{
@@ -31,17 +61,19 @@ const httpServer = createServer(function(req,res){
                 res.end(JSON.stringify({error: "Invalid JSON"}));
                 return;
             }
-            let username: string, password: string;
-            if (json.username == undefined || json.password == undefined){
-                res.writeHead(400, headers);
-                res.end(JSON.stringify({error: "Invalid JSON"}));
-                return;
-            }
-            else{
-                username = json.username;
-                password = json.password;
-            }
+            
             if(req.url == "/api/login"){
+                let username: string, password: string;
+                if (json.username == undefined || json.password == undefined){
+                    res.writeHead(400, headers);
+                    res.end(JSON.stringify({error: "Invalid JSON"}));
+                    return;
+                }
+                else{
+                    username = json.username;
+                    password = json.password;
+                }
+
                 if(Storage.getInstance().hasUser(username)){
                     let user = Storage.getInstance().getUser(username);
                     if(user.checkPassword(password)){
@@ -60,7 +92,19 @@ const httpServer = createServer(function(req,res){
                     res.end(JSON.stringify({error: "Invalid username"}));
                 }
             }
+
             else if(req.url == "/api/register"){
+                let username: string, password: string;
+                if (json.username == undefined || json.password == undefined){
+                    res.writeHead(400, headers);
+                    res.end(JSON.stringify({error: "Invalid JSON"}));
+                    return;
+                }
+                else{
+                    username = json.username;
+                    password = json.password;
+                }
+
                 if(!Storage.getInstance().hasUser(username)){
                     if(User.isValidUsername(username)){
                         Storage.getInstance().addUser(username, password);
@@ -77,6 +121,7 @@ const httpServer = createServer(function(req,res){
                     res.end(JSON.stringify({error: "Username already taken"}));
                 }
             }
+
             else{
                 res.writeHead(404, headers);
                 res.end(JSON.stringify({error: "Not found"}));
@@ -103,6 +148,16 @@ function isValidMessage(message: string): boolean{
     return true;
 }
 
+function logInterface(){
+    console.log("Available interfaces:");
+    for (let i = 0; i < localAddresses.length; i++){
+        console.log(localAddresses[i] + ":" + port);
+    }
+    console.log("Multicast address: " + multicastAddress);
+}
+
+logInterface();
+
 io.on('connection', (socket) => {
     console.log('user connected');
     
@@ -125,6 +180,7 @@ io.on('connection', (socket) => {
             return;
         }
         message = message.trim();
+        message = message.replace(/\n+/g, '\n');
         let token = storage.getTokenBySocket(socket.id);
         let user = storage.getUserByToken(token);
         socket.emit('chat', user.getUsername(), message);
@@ -145,3 +201,5 @@ io.on('connection', (socket) => {
 httpServer.listen(port, () => {
     console.log(`listening on *:${port}`);
 });
+
+multicastSocket.addMembership(multicastAddress);

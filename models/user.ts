@@ -18,7 +18,7 @@ export class User{
     
     private computeHash(password: string): string{
         let hash = crypto.createHash('sha256');
-        hash.update(password);
+        hash.update(this.username + password);
         return hash.digest('hex');
     }
 
