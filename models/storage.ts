@@ -87,8 +87,8 @@ export class Storage{
     }
 
     public removeSocket(socket: string): void{
-        this.socketToToken.delete(socket);
         this.userToSocket.delete(this.getUserByToken(this.getTokenBySocket(socket)).getUsername());
+        this.socketToToken.delete(socket);
     }
 
     public hasSocket(socket: string): boolean{
