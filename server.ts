@@ -15,7 +15,7 @@ const nets = networkInterfaces();
 for (const name of Object.keys(nets)) {
     for (const net of nets[name]!) {
         if (net.family === 'IPv4' && !net.internal) {
-            localAddresses.push(net.address);
+            localAddresses.push(name + " - " + net.address);
         }
     }
 }
@@ -167,9 +167,14 @@ function logInterface(){
 
 logInterface();
 
+function disconnectUser(socket: any){
+    let token = storage.getTokenBySocket(socket.id);
+    let user = storage.getUserByToken(token);
+    socket.to(generalRoom).emit('left', user.getUsername());
+    storage.removeSocket(socket.id);
+}
+
 io.on('connection', (socket) => {
-    console.log('user connected');
-    
     socket.on('join', (token: string) => {
         if(storage.hasToken(token)){
             let user = storage.getUserByToken(token);
@@ -212,18 +217,15 @@ io.on('connection', (socket) => {
     socket.on('logout', () => {
         if (storage.hasSocket(socket.id)){
             let token = storage.getTokenBySocket(socket.id);
+            disconnectUser(socket);
             storage.eraseToken(token);
-            storage.removeSocket(socket.id);
         }
     });
 
     socket.on('disconnect', () => {
         if (storage.hasSocket(socket.id)){
             console.log('user disconnected');
-            let token = storage.getTokenBySocket(socket.id);
-            let user = storage.getUserByToken(token);
-            socket.to(generalRoom).emit('left', user.getUsername());
-            storage.removeSocket(socket.id);
+            disconnectUser(socket);
         }
     });
 });
