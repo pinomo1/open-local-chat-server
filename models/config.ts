@@ -68,7 +68,7 @@ export class Config{
     }
 
     public writeToFile(filename: string): void{
-        let data = JSON.stringify(this);
+        let data = JSON.stringify(this, null, 4);
         fs.writeFileSync(filename, data);
     }
 
