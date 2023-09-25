@@ -1,10 +1,52 @@
 import { User } from './user';
 
+class TokenUserPair{
+    private token: string;
+    private username: string;
+
+    constructor(token: string, username: string){
+        this.token = token;
+        this.username = username;
+    }
+
+    public getToken(): string{
+        return this.token;
+    }
+
+    public getUsername(): string{
+        return this.username;
+    }
+}
+
+class SocketTokenUserPair{
+    private socket: string;
+    private token: string;
+    private username: string;
+
+    constructor(socket: string, token: string, username: string){
+        this.socket = socket;
+        this.token = token;
+        this.username = username;
+    }
+
+    public getSocket(): string{
+        return this.socket;
+    }
+
+    public getToken(): string{
+        return this.token;
+    }
+
+    public getUsername(): string{
+        return this.username;
+    }
+}
+
 export class Storage{
     private users: Map<string, User> = new Map<string, User>();
-    private tokens: Map<string, string> = new Map<string, string>();
-    private socketToToken: Map<string, string> = new Map<string, string>();
-    private userToSocket: Map<string, string> = new Map<string, string>();
+    private tokens: Map<string, TokenUserPair> = new Map<string, TokenUserPair>();
+    private socketToToken: Map<string, SocketTokenUserPair> = new Map<string, SocketTokenUserPair>();
+    private userToSocket: Map<string, SocketTokenUserPair> = new Map<string, SocketTokenUserPair>();
     private static instance: Storage;
     private filename: string = "users.txt";
 
@@ -13,9 +55,9 @@ export class Storage{
             return Storage.instance;
         }
         this.users = new Map<string, User>();
-        this.tokens = new Map<string, string>();
-        this.socketToToken = new Map<string, string>();
-        this.userToSocket = new Map<string, string>();
+        this.tokens = new Map<string, TokenUserPair>();
+        this.socketToToken = new Map<string, SocketTokenUserPair>();
+        this.userToSocket = new Map<string, SocketTokenUserPair>();
         Storage.instance = this;
         this.loadUsersFromFile();
     }
@@ -55,10 +97,10 @@ export class Storage{
         if (!this.tokens.has(token)){
             return false;
         }
-        if (!this.users.has(this.tokens.get(token)!)){
+        if (!this.users.has(this.tokens.get(token)?.getUsername()!)){
             return false;
         }
-        return this.users.get(this.tokens.get(token)!)!.isTokenValid(token);
+        return this.users.get(this.tokens.get(token)?.getUsername()!)!.isTokenValid(token);
     }
 
     public addUser(username: string, password: string): void{
@@ -71,7 +113,7 @@ export class Storage{
     }
 
     public getUserByToken(token: string): User{
-        let username = this.tokens.get(token)!;
+        let username = this.tokens.get(token)?.getUsername()!;
         return this.getUser(username);
     }
 
@@ -80,16 +122,19 @@ export class Storage{
     }
 
     public addToken(token: string, username: string): void{
-        this.tokens.set(token, username);
+        let pair = new TokenUserPair(token, username);
+        this.tokens.set(token, pair);
     }
 
     public addSocketToToken(socket: string, token: string): void{
-        this.socketToToken.set(socket, token);
-        this.userToSocket.set(this.getUserByToken(token).getUsername(), socket);
+        let username = this.getUserByToken(token).getUsername();
+        let pair = new SocketTokenUserPair(socket, token, username);
+        this.socketToToken.set(socket, pair);
+        this.userToSocket.set(username, pair);
     }
 
     public getTokenBySocket(socket: string): string{
-        return this.socketToToken.get(socket)!;
+        return this.socketToToken.get(socket)?.getToken()!;
     }
 
     public removeSocket(socket: string): void{
@@ -116,7 +161,7 @@ export class Storage{
     }
 
     public getSocketByUsername(username: string): string{
-        return this.userToSocket.get(username)!;
+        return this.userToSocket.get(username)?.getSocket()!;
     }
 
     public hasSocketByUsername(username: string): boolean{
