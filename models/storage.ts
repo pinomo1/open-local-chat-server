@@ -47,6 +47,8 @@ export class Storage{
     private tokens: Map<string, TokenUserPair> = new Map<string, TokenUserPair>();
     private socketToToken: Map<string, SocketTokenUserPair> = new Map<string, SocketTokenUserPair>();
     private userToSocket: Map<string, SocketTokenUserPair> = new Map<string, SocketTokenUserPair>();
+    private roomToSokets: Map<string, Set<string>> = new Map<string, Set<string>>();
+    private socketToRooms: Map<string, Set<string>> = new Map<string, Set<string>>();
     private static instance: Storage;
     private filename: string = "users.txt";
 
@@ -58,6 +60,8 @@ export class Storage{
         this.tokens = new Map<string, TokenUserPair>();
         this.socketToToken = new Map<string, SocketTokenUserPair>();
         this.userToSocket = new Map<string, SocketTokenUserPair>();
+        this.roomToSokets = new Map<string, Set<string>>();
+        this.socketToRooms = new Map<string, Set<string>>();
         Storage.instance = this;
         this.loadUsersFromFile();
     }
@@ -166,5 +170,51 @@ export class Storage{
 
     public hasSocketByUsername(username: string): boolean{
         return this.userToSocket.has(username);
+    }
+
+    public addSocketToRoom(socket: string, room: string): void{
+        if (!this.hasRoom(room)){
+            this.roomToSokets.set(room, new Set<string>());
+        }
+        this.socketToRooms.set(socket, new Set<string>());
+        this.roomToSokets.get(room)?.add(socket);
+    }
+
+    public removeSocketFromRoom(socket: string, room: string): void{
+        if (!this.hasRoom(room)){
+            return;
+        }
+        this.roomToSokets.get(room)?.delete(socket);
+        this.socketToRooms.delete(socket);
+        if (this.roomToSokets.get(room)?.size == 0){
+            this.roomToSokets.delete(room);
+        }
+    }
+
+    public getSocketsInRoom(room: string): string[]{
+        if (!this.hasRoom(room)){
+            return [];
+        }
+        return Array.from(this.roomToSokets.get(room)!);
+    }
+
+    public getUsersInRoom(room: string): string[]{
+        let sockets = this.getSocketsInRoom(room);
+        let users: string[] = [];
+        for(let socket of sockets){
+            users.push(this.getUserByToken(this.getTokenBySocket(socket)).getUsername());
+        }
+        return users;
+    }
+
+    public hasRoom(room: string): boolean{
+        return this.roomToSokets.has(room);
+    }
+
+    public getRoomsBySocket(socket: string): string[]{
+        if (!this.hasSocket(socket)){
+            return [];
+        }
+        return Array.from(this.socketToRooms.get(socket)!);
     }
 }
