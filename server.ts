@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { createServer } from "http";
 import { networkInterfaces } from "node:os";
 import dgram from "node:dgram";
+import { Config } from "./models/config";
 
 const multicastAddress = "224.0.2.61";
 const multicastSocket: dgram.Socket = dgram.createSocket({type: "udp4", reuseAddr: true});
@@ -11,6 +12,8 @@ const localAddresses: string[] = [];
 const storage = new Storage();
 
 const nets = networkInterfaces();
+
+const config = new Config();
 
 for (const name of Object.keys(nets)) {
     for (const net of nets[name]!) {
@@ -65,6 +68,7 @@ const httpServer = createServer(function(req,res){
                 res.writeHead(200, headers);
                 res.end();
             }
+
             else if(req.url == "/api/login"){
                 let username: string, password: string;
                 if (json.username == undefined || json.password == undefined){
@@ -138,11 +142,11 @@ const httpServer = createServer(function(req,res){
 });
 
 const io = new Server(httpServer)
-const port = 9001
+const port = config.getPort();
 const generalRoom = "general";
 
 function isValidMessage(message: string): boolean{
-    if (message.length > 1000){
+    if (message.length > config.getMaxMessageLength()){
         return false;
     }
     if (message.length == 0){

@@ -1,9 +1,11 @@
 import crypto from 'crypto';
+import { Config } from './config';
 
 export class User{
     private username: string;
     private passwordHash: string;
     private lastToken: string;
+    private static config = new Config();
 
     constructor(username: string = "", password: string = "", isPassword: boolean = true){
         this.username = username;
@@ -52,12 +54,13 @@ export class User{
     }
 
     static isValidUsername(username: string): boolean{
-        let regex = /^[a-z][a-z0-9_-]{2,19}$/;
-        let forbidden: string[] = [
-            "admin", "administrator", "administration",
-            "root", "superuser", "super",
-            "moderator", "mod", "moderation"
-        ];
+        let minLen = User.config.getMinUsernameLength();
+        let maxLen = User.config.getMaxUsernameLength();
+        if (username.length < minLen || username.length > maxLen){
+            return false;
+        }
+        let regex = /^[a-z][a-z0-9_-]*$/;
+        let forbidden: string[] = User.config.getForbiddenUsernames();
         return regex.test(username) && !forbidden.includes(username);
     }
 }
