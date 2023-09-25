@@ -63,4 +63,13 @@ export class User{
         let forbidden: string[] = User.config.getForbiddenUsernames();
         return regex.test(username) && !forbidden.includes(username);
     }
+
+    static isValidPassword(password: string): boolean{
+        let minLen = User.config.getMinPasswordLength();
+        let maxLen = User.config.getMaxPasswordLength();
+        if (password.length < minLen || password.length > maxLen){
+            return false;
+        }
+        return true;
+    }
 }

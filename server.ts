@@ -113,7 +113,7 @@ const httpServer = createServer(function(req,res){
                 }
 
                 if(!Storage.getInstance().hasUser(username)){
-                    if(User.isValidUsername(username)){
+                    if(User.isValidUsername(username) && User.isValidPassword(password)){
                         Storage.getInstance().addUser(username, password);
                         res.writeHead(200, headers);
                         res.end(JSON.stringify({}));

@@ -2,8 +2,10 @@ var fs = require('fs');
 
 export class Config{
     private port: number = 0;
+    private minUsernameLength: number = 0; 
     private maxUsernameLength: number = 0;
-    private minUsernameLength: number = 0;
+    private minPasswordLength: number = 0;
+    private maxPasswordLength: number = 0;
     private maxMessageLength: number = 0;
     private forbiddenUsernames: string[] = [];
     private static instance: Config;
@@ -36,10 +38,15 @@ export class Config{
         this.createFileIfNotExists(filename);
         let json = this.tryReadFromFileJson(filename);
         this.port = json.port ?? 9001;
-        this.maxUsernameLength = json.maxUsernameLength ?? 20;
         this.minUsernameLength = json.minUsernameLength ?? 3;
+        this.maxUsernameLength = json.maxUsernameLength ?? 20;
         if (this.minUsernameLength > this.maxUsernameLength){
             throw new Error("minUsernameLength cannot be greater than maxUsernameLength");
+        }
+        this.minPasswordLength = json.minPasswordLength ?? 6;
+        this.maxPasswordLength = json.maxPasswordLength ?? 128;
+        if (this.minPasswordLength > this.maxPasswordLength){
+            throw new Error("minPasswordLength cannot be greater than maxPasswordLength");
         }
         this.maxMessageLength = json.maxMessageLength ?? 1000;
         if (this.maxMessageLength < 1){
@@ -65,8 +72,10 @@ export class Config{
     }
 
     public getPort() { return this.port; }
-    public getMaxUsernameLength() { return this.maxUsernameLength; }
     public getMinUsernameLength() { return this.minUsernameLength; }
+    public getMaxUsernameLength() { return this.maxUsernameLength; }
+    public getMinPasswordLength() { return this.minPasswordLength; }
+    public getMaxPasswordLength() { return this.maxPasswordLength; }
     public getMaxMessageLength() { return this.maxMessageLength; }
     public getForbiddenUsernames() { return this.forbiddenUsernames; }
 }
