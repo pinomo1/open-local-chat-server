@@ -145,6 +145,9 @@ function isValidMessage(message: string): boolean{
     if (message.length > 1000){
         return false;
     }
+    if (message.length == 0){
+        return false;
+    }
     return true;
 }
 
@@ -224,7 +227,6 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         if (storage.hasSocket(socket.id)){
-            console.log('user disconnected');
             disconnectUser(socket);
         }
     });
