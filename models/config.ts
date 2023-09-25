@@ -2,6 +2,10 @@ var fs = require('fs');
 
 export class Config{
     private port: number = 0;
+    private generalRoom: string = "";
+    private serverName: string = "";
+    private serverId: string = "";
+    private serverDescription: string = "";
     private minUsernameLength: number = 0; 
     private maxUsernameLength: number = 0;
     private minPasswordLength: number = 0;
@@ -38,6 +42,10 @@ export class Config{
         this.createFileIfNotExists(filename);
         let json = this.tryReadFromFileJson(filename);
         this.port = json.port ?? 9001;
+        this.generalRoom = json.generalRoom ?? "general";
+        this.serverName = json.serverName ?? "Chat Server";
+        this.serverId = json.serverId ?? "chat-server";
+        this.serverDescription = json.serverDescription ?? "A chat server";
         this.minUsernameLength = json.minUsernameLength ?? 3;
         this.maxUsernameLength = json.maxUsernameLength ?? 20;
         if (this.minUsernameLength > this.maxUsernameLength){
@@ -72,6 +80,8 @@ export class Config{
     }
 
     public getPort() { return this.port; }
+    public getGeneralRoom() { return this.generalRoom; }
+    public getServerName() { return this.serverName; }
     public getMinUsernameLength() { return this.minUsernameLength; }
     public getMaxUsernameLength() { return this.maxUsernameLength; }
     public getMinPasswordLength() { return this.minPasswordLength; }
