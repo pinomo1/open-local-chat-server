@@ -93,6 +93,12 @@ export class Storage{
     }
 
     public removeSocket(socket: string): void{
+        if (!this.hasSocket(socket)){
+            return;
+        }
+        if (!this.hasToken(this.getTokenBySocket(socket))){
+            return;
+        }
         this.userToSocket.delete(this.getUserByToken(this.getTokenBySocket(socket)).getUsername());
         this.socketToToken.delete(socket);
     }
@@ -107,5 +113,13 @@ export class Storage{
 
     public onlineUsers(): string[]{
         return Array.from(this.userToSocket.keys());
+    }
+
+    public getSocketByUsername(username: string): string{
+        return this.userToSocket.get(username)!;
+    }
+
+    public hasSocketByUsername(username: string): boolean{
+        return this.userToSocket.has(username);
     }
 }
