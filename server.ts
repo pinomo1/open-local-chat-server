@@ -187,10 +187,10 @@ io.on('connection', (socket) => {
             }
             socket.join(generalRoom);
             socket.emit('joined', user.getUsername());
+            storage.addSocketToToken(socket.id, token);
             let users = storage.onlineUsers();
             socket.emit('users', users);
             socket.to(generalRoom).emit('joined', user.getUsername());
-            storage.addSocketToToken(socket.id, token);
         }
         else{
             socket.emit('error', "Invalid token");
