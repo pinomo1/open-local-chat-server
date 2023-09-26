@@ -46,6 +46,7 @@ export class Config{
         this.serverName = json.serverName ?? "Chat Server";
         this.serverId = json.serverId ?? "chat-server";
         this.serverDescription = json.serverDescription ?? "A chat server";
+        this.maxFileSize = json.maxFileSize ?? 1024 * 1024;
         this.minUsernameLength = json.minUsernameLength ?? 3;
         this.maxUsernameLength = json.maxUsernameLength ?? 20;
         if (this.minUsernameLength > this.maxUsernameLength){
@@ -63,7 +64,7 @@ export class Config{
         this.forbiddenUsernames = json.forbiddenUsernames ?? [
             "admin", "administrator", "administration",
             "root", "superuser", "super",
-            "moderator", "mod", "moderation"
+            "moderator", "mod", "moderation", "system"
         ];
     }
 
@@ -82,6 +83,8 @@ export class Config{
     public getPort() { return this.port; }
     public getGeneralRoom() { return this.generalRoom; }
     public getServerName() { return this.serverName; }
+    public getServerId() { return this.serverId; }
+    public getServerDescription() { return this.serverDescription; }
     public getMinUsernameLength() { return this.minUsernameLength; }
     public getMaxUsernameLength() { return this.maxUsernameLength; }
     public getMinPasswordLength() { return this.minPasswordLength; }

@@ -178,7 +178,6 @@ function disconnectUser(socket: any){
     let token = storage.getTokenBySocket(socket.id);
     let user = storage.getUserByToken(token);
     socket.to(generalRoom).emit('left', user.getUsername());
-    // to all rooms the user is in
     let rooms = storage.getRoomsBySocket(socket.id);
     for (let i = 0; i < rooms.length; i++){
         socket.to(rooms[i]).emit('left-r', user.getUsername());
@@ -196,6 +195,8 @@ io.on('connection', (socket) => {
                 return;
             }
             socket.join(generalRoom);
+            socket.join("dm " + user.getUsername());
+            socket.join("your dm " + user.getUsername());
             socket.emit('joined', user.getUsername());
             socket.emit('entered', user.getUsername(), generalRoom);
             storage.addSocketToToken(socket.id, token);
@@ -210,13 +211,45 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('chat', (message: string) => {
+    socket.on('chat', (message: string, room: string) => {
         if (!storage.hasSocket(socket.id)){
             socket.emit('error', "Not logged in");
             return;
         }
         if (!storage.hasToken(storage.getTokenBySocket(socket.id))){
             socket.emit('error', "Invalid token");
+            return;
+        }
+        if (!User.isValidUsername(room)){
+            socket.emit('error', "Invalid room name");
+            return;
+        }
+        let token = storage.getTokenBySocket(socket.id);
+        let user = storage.getUserByToken(token);
+        if (!storage.getRoomsBySocket(socket.id).includes(room)){
+            socket.emit('error', "Not in room");
+            return;
+        }
+        message = normalizeMessage(message);
+        if (!isValidMessage(message)){
+            socket.emit('error', "Invalid message");
+            return;
+        }
+        socket.emit('chat', user.getUsername(), message);
+        socket.to(room).emit('chat', user.getUsername(), message);
+    });
+
+    socket.on('dm', (username: string, message: string) => {
+        if (!storage.hasSocket(socket.id)){
+            socket.emit('error', "Not logged in");
+            return;
+        }
+        if (!storage.hasToken(storage.getTokenBySocket(socket.id))){
+            socket.emit('error', "Invalid token");
+            return;
+        }
+        if (!storage.hasUser(username)){
+            socket.emit('error', "Invalid username");
             return;
         }
         let token = storage.getTokenBySocket(socket.id);
@@ -226,11 +259,15 @@ io.on('connection', (socket) => {
             socket.emit('error', "Invalid message");
             return;
         }
-        socket.emit('chat', user.getUsername(), message);
-        socket.to(generalRoom).emit('chat', user.getUsername(), message);
+        socket.emit('your dm ' + username, username, user.getUsername(), message);
+        socket.to("dm " + username).emit('dm', user.getUsername(), message);
     });
 
     socket.on('enter-room', (room: string) => {
+        if (!User.isValidUsername(room)){
+            socket.emit('error', "Invalid room name");
+            return;
+        }
         if (!storage.hasSocket(socket.id)){
             socket.emit('error', "Not logged in");
             return;
