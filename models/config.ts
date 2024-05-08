@@ -63,7 +63,7 @@ export class Config{
         this.forbiddenUsernames = json.forbiddenUsernames ?? [
             "admin", "administrator", "administration",
             "root", "superuser", "super",
-            "moderator", "mod", "moderation"
+            "moderator", "mod", "moderation", "system"
         ];
     }
 
